@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>RSA Algorithm</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, button { padding: 5px; margin: 5px 0; }
+    #output { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>RSA Algorithm</h1>
+  <!-- Menu Buttons -->
+  <div id="menu">
+    <button onclick="generateRSAKeys()">Generate RSA Keys</button>
+    <button onclick="encryptMessage()">Encrypt Message</button>
+    <button onclick="decryptMessage()">Decrypt Message</button>
+  </div>
+
+  <!-- Input Section -->
+  <div id="inputs">
+    <h3>Inputs</h3>
+    <p>
+      <label for="message">Enter Message (number):</label>
+      <input type="number" id="message" value="123">
+    </p>
+    <p>
+      <label for="cipher">Cipher Text:</label>
+      <input type="text" id="cipher" readonly>
+    </p>
+    <!-- <p><em>Sample input: Use 123 as the message.</em></p> -->
+  </div>
+
+  <!-- Output Section -->
+  <div id="output">
+    <h3>Output</h3>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    function power(base, expo, m)     //compute base^expo mod m using BigInt
+    {
+      let res = BigInt(1);
+      base = BigInt(base) % BigInt(m);
+      while (expo > 0) {
+        if (expo & BigInt(1)) {
+          res = (res * base) % BigInt(m);
+        }
+        base = (base * base) % BigInt(m);
+        expo = expo / BigInt(2); // BigInt div automatically floors
+      }
+      return res;
+    }
+
+    function modInverse(e, phi)       //find modular inverse of e modulo phi(n) (brute force)
+    {
+      e = BigInt(e);
+      phi = BigInt(phi);
+      for (let d = BigInt(2); d < phi; d++) {
+        if ((e * d) % phi === BigInt(1)) {
+          return d;
+        }
+      }
+      return -1;
+    }
+
+    function gcd(a, b)       //compute GCD using Euclid's algo
+    {
+      while (b !== BigInt(0)) {
+        let t = b;
+        b = a % b;
+        a = t;
+      }
+      return a;
+    }
+
+    let rsaKeys = {};       //RSA keys storage
+
+    function generateRSAKeys()    
+    {
+      let p = BigInt(7919);         // For demonstration, we use two small primes.
+      let q = BigInt(1009);
+
+      let n = p * q;
+      let phi = (p - BigInt(1)) * (q - BigInt(1));
+
+      // Choose e such that 1 < e < phi and gcd(e, phi) == 1
+      let e;
+      for (e = BigInt(2); e < phi; e++) {
+        if (gcd(e, phi) === BigInt(1))
+          break;
+      }
+
+      // Compute d such that (e * d) ≡ 1 (mod phi)
+      let d = modInverse(e, phi);
+      rsaKeys = { e, d, n };
+
+      // Display keys
+      document.getElementById("results").innerHTML = `
+        <p><strong>Public Key (e, n):</strong> (${e}, ${n})</p>
+        <p><strong>Private Key (d, n):</strong> (${d}, ${n})</p>
+      `;
+    }
+
+    // Encrypt msg using public key (e, n)
+    function encrypt(m, e, n) 
+    {
+      return power(m, e, n);
+    }
+
+    // Decrypt msg using private key (d, n)
+    function decrypt(c, d, n) 
+    {
+      return power(c, d, n);
+    }
+
+    //Event handler for encryption
+    function encryptMessage() 
+    {
+      if (!rsaKeys.e) {
+        alert("Please generate RSA keys first!");
+        return;
+      }
+      
+      //Get input msg (num) and convert to BigInt
+      let m = BigInt(document.getElementById("message").value);
+      let cipher = encrypt(m, rsaKeys.e, rsaKeys.n);
+      
+      //Display encrypted cipher text and update input field for decryption
+      document.getElementById("results").innerHTML += <p><strong>Encrypted Message:</strong> ${cipher}</p>;
+      document.getElementById("cipher").value = cipher;
+    }
+
+    // Event handler for decryption
+    function decryptMessage() 
+    {
+      if (!rsaKeys.d) {
+        alert("Please generate RSA keys first!");
+        return;
+      }
+
+      // Get cipher text from input field and convert to BigInt
+      let cipher = BigInt(document.getElementById("cipher").value);
+      let decrypted = decrypt(cipher, rsaKeys.d, rsaKeys.n);
+      
+      // Display decrypted msg
+      document.getElementById("results").innerHTML += <p><strong>Decrypted Message:</strong> ${decrypted}</p>;
+    }
+  </script>
+</body>
+</html>
