@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!-- Declares the document type as HTML5 -->
+<html lang="en">
+<!-- Opens the HTML document and sets the language to English -->
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Sets character encoding to UTF-8 to support most characters -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Ensures proper scaling on different devices for responsiveness -->
+
+    <title>RSA Encryption</title>
+    <!-- Sets the title of the webpage displayed in the browser tab -->
+</head>
+
+<body>
+    <!-- Start of the body section of the HTML document -->
+
+    <h1>RSA encryption</h1>
+    <!-- Displays the main heading of the page -->
+
+    <label for="message">Enter message</label>
+    <!-- Label for the message input field (for encryption) -->
+
+    <input type="text" id="message">
+    <!-- Text input field with ID 'message' for user to enter a message to encrypt -->
+
+    <button onclick="encryptMessage()">Encrypt</button>
+    <!-- Button that triggers the 'encryptMessage' JavaScript function when clicked -->
+
+    <p>Encrypted: <span id="encryptedText"></span></p>
+    <!-- Paragraph that shows the encrypted message inside a span with ID 'encryptedText' -->
+
+    <label for="message2">Enter message</label>
+    <!-- Label for the message input field (for decryption) -->
+
+    <input type="text" id="message2">
+    <!-- Text input field with ID 'message2' for user to enter a message to decrypt -->
+
+    <button onclick="decryptMessage()">Decrypt</button>
+    <!-- Button that triggers the 'decryptMessage' JavaScript function when clicked -->
+
+    <p>Decrypted: <span id="decryptedText"></span></p>
+    <!-- Paragraph that shows the decrypted message inside a span with ID 'decrypted
+
+
+
+JS Explanation
+
+// RSA class definition
+class RSA {
+    constructor() {
+        this.p = 61; // First prime number
+        this.q = 53; // Second prime number
+        this.n = this.p * this.q; // n = p * q (modulus)
+        this.phi = (this.p - 1) * (this.q - 1); // Euler's totient function φ(n) = (p-1)*(q-1)
+        this.e = 17; // Public exponent e (1 < e < phi) and gcd(e, phi) = 1
+        this.d = this.modInverse(this.e, this.phi); // Private exponent d (modular inverse of e mod phi)
+    }
+
+    // Method to compute modular inverse of e modulo phi using Extended Euclidean Algorithm
+    modInverse(e, phi) {
+        let m0 = phi, t, q;
+        let x0 = 0, x1 = 1;
+        if (phi == 1) return 0; // If phi is 1, no inverse
+        while (e > 1) {
+            q = Math.floor(e / phi); // Quotient
+            t = phi;
+            phi = e % phi; // Update phi
+            e = t;
+            t = x0;
+            x0 = x1 - q * x0; // Update x0
+            x1 = t;           // Update x1
+        }
+        if (x1 < 0) x1 += m0; // Ensure x1 is positive
+        return x1; // Return modular inverse
+    }
+
+    // Encrypt the input message using RSA
+    encryptMessage(message) {
+        let encrypted = [];
+        for (let i = 0; i < message.length; i++) {
+            let m = message.charCodeAt(i); // Convert character to ASCII
+            let c = BigInt(m) ** BigInt(this.e) % BigInt(this.n); // c = m^e mod n
+            encrypted.push(c.toString()); // Add encrypted character to array
+        }
+        return encrypted.join(" "); // Return encrypted characters as space-separated string
+    }
+
+    // Decrypt the encrypted message using RSA
+    decryptMessage(encryptedMessage) {
+        let decrypted = "";
+        let parts = encryptedMessage.split(" "); // Split the encrypted string
+        for (let part of parts) {
+            let c = BigInt(part); // Convert string to BigInt
+            let m = c ** BigInt(this.d) % BigInt(this.n); // m = c^d mod n
+            decrypted += String.fromCharCode(Number(m)); // Convert ASCII to character and add to decrypted string
+        }
+        return decrypted; // Return the decrypted message
+    }
+}
+
+// Create an instance of RSA
+let rsa = new RSA();
+
+// Function to be called on Encrypt button click
+function encryptMessage() {
+    let message = document.getElementById("message").value; // Get message input
+    let encryptedText = rsa.encryptMessage(message); // Encrypt the message
+    document.getElementById("encryptedText").innerText = encryptedText; // Display the encrypted result
+}
+
+// Function to be called on Decrypt button click
+function decryptMessage() {
+    let encryptedText = document.getElementById("encryptedText").innerText; // Get the encrypted message
+    let decryptedText = rsa.decryptMessage(encryptedText); // Decrypt the message
+    document.getElementById("decryptedText").innerText = decryptedText; // Display the decrypted result
+}
